@@ -24,9 +24,9 @@ class Block{
 |================================================= */
 
 class Blockchain{
-  
+
   constructor() {
-    let genesisBlockExists = false;
+    this.genesisBlockExists = false;
   }
 
   async createGenesisBlock() {
