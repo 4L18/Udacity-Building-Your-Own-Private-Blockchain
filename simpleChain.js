@@ -24,7 +24,7 @@ class Block{
 |================================================= */
 
 class Blockchain{
-
+  
   constructor() {
     let genesisBlockExists = false;
   }
@@ -70,11 +70,17 @@ class Blockchain{
 
   // Get block height
   async getBlockHeight() {
+    if (!this.genesisBlockExists) {
+      await this.createGenesisBlock();
+    }
     return await levelSandbox.getBlocksCount();
   }
 
   // Get block
   async getBlock(blockHeight) {
+    if (!this.genesisBlockExists) {
+      await this.createGenesisBlock();
+    }
     // return object as a single string
     let block = await levelSandbox.getLevelDBData(blockHeight);
     return block;
@@ -82,6 +88,10 @@ class Blockchain{
 
   // Validate block
   async validateBlock(blockHeight) {
+    if (!this.genesisBlockExists) {
+      await this.createGenesisBlock();
+    }
+
     // get block object
     let block = JSON.parse(await this.getBlock(blockHeight));
     // get block hash
@@ -101,6 +111,9 @@ class Blockchain{
 
   // Validate blockchain
   async validateChain() {
+    if (!this.genesisBlockExists) {
+      await this.createGenesisBlock();
+    }
 
     let height = await levelSandbox.getBlocksCount();
     let promisesBlock = [];
@@ -146,6 +159,11 @@ class Blockchain{
   }
 
   async addBlocksAndTest() {
+
+    if (!this.genesisBlockExists) {
+      await this.createGenesisBlock();
+    }
+
     for (let i = 1; i <= 9; i++) {
       await bc.addBlock(new Block('Block #' + i));
       //await bc.validateBlock(i);
