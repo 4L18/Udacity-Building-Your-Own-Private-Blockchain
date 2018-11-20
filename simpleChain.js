@@ -97,38 +97,40 @@ class Blockchain{
     // generate block hash
     let validBlockHash = await SHA256(await JSON.stringify(block)).toString();
     
-    if (blockHash === validBlockHash) {
-        return true;
-      } else {
-        console.log('Block #'+blockHeight+' invalid hash:\n'+blockHash+'<>'+validBlockHash);
-        return false;
-      }
+    if (blockHash !== validBlockHash) {
+      console.log('Block #' + blockHeight + ' invalid hash:\n' + blockHash + '<>' + validBlockHash);
+      return false;
+    }
+    console.log('Block #' + blockHeight + ' is valid');
+    return true;
   }
 
   // Validate blockchain
   async validateChain() {
-    let height = await levelSandbox.getBlocksCount();
+    let chainSize = await levelSandbox.getBlocksCount();
     let promisesBlock = [];
     let promisesLink = [];
     let errorLog = [];
 
     let linkPromise = (index, blockchain) => {
       return new Promise(async function(resolve, reject) {
-        let block = await blockchain.getBlock(index);
-        let blockHash = block.hash;
+        if (index < chainSize) {
+          let block = await blockchain.getBlock(index);
+          let blockHash = block.hash;
 
-        let nextBlock = await blockchain.getBlock(index+1);
-        let nextBlockPreviousHash = nextBlock.previousBlockHash;
+          let nextBlock = await blockchain.getBlock(index+1);
+          let nextBlockPreviousHash = nextBlock.previousBlockHash;
 
-        if (blockHash !== nextBlockPreviousHash) {
-            reject(index);
+          if (blockHash !== nextBlockPreviousHash) {
+              reject(index);
+          }
+          console.log('Block #' + index + ' is linked to previous block #' + (index+1));
+          resolve();
         }
-
-        resolve();
       });
     };
 
-    for (var i = 0; i < height-1; i++) {
+    for (let i = 0; i <= chainSize; i++) {
       promisesBlock.push(this.validateBlock(i));
       promisesLink.push(linkPromise(i, this));
     }
