@@ -14,7 +14,17 @@ const block = require('./block');
 class Blockchain{
 
   constructor() {
-    this.createGenesisBlock();
+    if (!this.genesisBlockExists()) {
+      createGenesisBlock();
+    }
+  }
+
+  // This method is done because I'm yet to know a better way to call an async
+  //  function from the constructor that belongs to the class
+  async genesisBlockExists() {
+    let height = await this.getBlockHeight();
+    if (height === -1) { return false; }
+    return true;
   }
 
   // Add de genesis block 
@@ -33,15 +43,15 @@ class Blockchain{
   // Add new block
   async addBlock(newBlock) {
 
-    let height = await this.getBlockHeight();
-    if (height === -1) {
-      await this.createGenesisBlock();
+    if (!this.genesisBlockExists()) {
+      createGenesisBlock();
     }
 
     console.log(newBlock.body);
 
     // Block height
-    newBlock.height = height + 1;
+    let height = await this.getBlockHeight();
+    newBlock.height = ++height;
     console.log('Height: ', newBlock.height);
     
     // UTC timestamp
@@ -50,7 +60,7 @@ class Blockchain{
 
     // Previous block hash
     if (newBlock.height > 0) {
-      let previousBlock = JSON.parse(await this.getBlock(height));
+      let previousBlock = JSON.parse(await this.getBlock(height-1));
       newBlock.previousBlockHash = previousBlock.hash;
     }
     console.log('Previous block hash: ', newBlock.previousBlockHash);
@@ -71,11 +81,6 @@ class Blockchain{
 
   // Get block
   async getBlock(blockHeight) {
-    let height = await this.getBlockHeight();
-    if (height === -1) {
-      await this.createGenesisBlock();
-    }
-
     // return object as a single string
     let block = await levelSandbox.getLevelDBData(blockHeight);
     return block;
@@ -83,11 +88,6 @@ class Blockchain{
 
   // Validate block
   async validateBlock(blockHeight) {
-    let height = await this.getBlockHeight();
-    if (height === -1) {
-      await this.createGenesisBlock();
-    }
-
     // get block object
     let block = JSON.parse(await this.getBlock(blockHeight));
     // get block hash
@@ -107,12 +107,7 @@ class Blockchain{
 
   // Validate blockchain
   async validateChain() {
-    let height = await this.getBlockHeight();
-    if (height === -1) {
-      await this.createGenesisBlock();
-    }
-
-    height = await levelSandbox.getBlocksCount();
+    let height = await levelSandbox.getBlocksCount();
     let promisesBlock = [];
     let promisesLink = [];
     let errorLog = [];
