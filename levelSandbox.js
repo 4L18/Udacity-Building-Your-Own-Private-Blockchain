@@ -44,7 +44,7 @@ function addDataToLevelDB(value) {
 
 function getBlocksCount() {
   return new Promise((resolve, reject) => {
-    let count = 0;
+    let count = -1;
     db.createReadStream()
     .on('data', function (data) {
       count++;

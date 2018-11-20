@@ -14,26 +14,34 @@ const block = require('./block');
 class Blockchain{
 
   constructor() {
-    this.genesisBlockExists = false;
+    this.createGenesisBlock();
   }
 
+  // Add de genesis block 
   async createGenesisBlock() {
-    this.genesisBlockExists = true;
-    await this.addBlock(new block.Block("Block #0 - Genesis block"));
+    console.log('Block #0 - Genesis block');
+    let genBlock = await new block.Block('Block #0 - Genesis block');
+    console.log('Height: ', genBlock.height);
+    genBlock.time = await new Date().getTime().toString(); //.slice(0,-3);
+    console.log('Timestamp: ', genBlock.time);
+    genBlock.hash = await SHA256(JSON.stringify(genBlock)).toString();
+    console.log('Hash: ', genBlock.hash);
+    let res = await levelSandbox.addLevelDBData(genBlock.height, JSON.stringify(genBlock).toString());
+    console.log(res + '\n');
   }
 
   // Add new block
   async addBlock(newBlock) {
 
-    if (!this.genesisBlockExists) {
+    let height = await this.getBlockHeight();
+    if (height === -1) {
       await this.createGenesisBlock();
     }
 
     console.log(newBlock.body);
 
     // Block height
-    let height = await this.getBlockHeight();
-    newBlock.height = height;
+    newBlock.height = height + 1;
     console.log('Height: ', newBlock.height);
     
     // UTC timestamp
@@ -41,8 +49,8 @@ class Blockchain{
     console.log('Timestamp: ', newBlock.time);
 
     // Previous block hash
-    if(height > 0) {
-      let previousBlock = JSON.parse(await this.getBlock(height-1));
+    if (height >= 0) {
+      let previousBlock = JSON.parse(await this.getBlock(height));
       newBlock.previousBlockHash = previousBlock.hash;
     }
     console.log('Previous block hash: ', newBlock.previousBlockHash);
@@ -58,17 +66,16 @@ class Blockchain{
 
   // Get block height
   async getBlockHeight() {
-    if (!this.genesisBlockExists) {
-      await this.createGenesisBlock();
-    }
     return await levelSandbox.getBlocksCount();
   }
 
   // Get block
   async getBlock(blockHeight) {
-    if (!this.genesisBlockExists) {
+    let height = await this.getBlockHeight();
+    if (height === -1) {
       await this.createGenesisBlock();
     }
+
     // return object as a single string
     let block = await levelSandbox.getLevelDBData(blockHeight);
     return block;
@@ -76,7 +83,8 @@ class Blockchain{
 
   // Validate block
   async validateBlock(blockHeight) {
-    if (!this.genesisBlockExists) {
+    let height = await this.getBlockHeight();
+    if (height === -1) {
       await this.createGenesisBlock();
     }
 
@@ -99,11 +107,12 @@ class Blockchain{
 
   // Validate blockchain
   async validateChain() {
-    if (!this.genesisBlockExists) {
+    let height = await this.getBlockHeight();
+    if (height === -1) {
       await this.createGenesisBlock();
     }
 
-    let height = await levelSandbox.getBlocksCount();
+    height = await levelSandbox.getBlocksCount();
     let promisesBlock = [];
     let promisesLink = [];
     let errorLog = [];
@@ -148,7 +157,7 @@ class Blockchain{
 
   async addBlocksAndTest() {
 
-    if (!this.genesisBlockExists) {
+    if (await this.getBlockHeight() === -1) {
       await this.createGenesisBlock();
     }
 
