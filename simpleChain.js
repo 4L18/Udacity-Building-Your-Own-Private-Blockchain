@@ -49,7 +49,7 @@ class Blockchain{
     console.log('Timestamp: ', newBlock.time);
 
     // Previous block hash
-    if (height >= 0) {
+    if (newBlock.height > 0) {
       let previousBlock = JSON.parse(await this.getBlock(height));
       newBlock.previousBlockHash = previousBlock.hash;
     }
@@ -118,20 +118,19 @@ class Blockchain{
     let errorLog = [];
 
     let linkPromise = (index, blockchain) => {
-      return new Promise(async function(resolve, reject)
-        {
-          let block = await blockchain.getBlock(index);
-          let blockHash = block.hash;
+      return new Promise(async function(resolve, reject) {
+        let block = await blockchain.getBlock(index);
+        let blockHash = block.hash;
 
-          let nextBlock = await blockchain.getBlock(index+1);
-          let nextBlockPreviousHash = nextBlock.previousBlockHash;
+        let nextBlock = await blockchain.getBlock(index+1);
+        let nextBlockPreviousHash = nextBlock.previousBlockHash;
 
-          if (blockHash !== nextBlockPreviousHash) {
-              reject(index);
-          }
+        if (blockHash !== nextBlockPreviousHash) {
+            reject(index);
+        }
 
-          resolve();
-        });
+        resolve();
+      });
     };
 
     for (var i = 0; i < height-1; i++) {
