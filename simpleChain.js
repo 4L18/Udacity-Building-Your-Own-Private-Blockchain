@@ -7,24 +7,25 @@ const levelSandbox = require('./levelSandbox');
 const block = require('./block');
 
 
-/* ===== Blockchain Class ===========================
-|  Class with a constructor for new blockchain 	  	|
-|================================================= */
+/* ===== Blockchain Class =======================
+|  Class with a constructor for new blockchain  |
+|============================================= */
 
 class Blockchain{
 
   constructor() {
-    if (!this.genesisBlockExists()) {
-      createGenesisBlock();
-    }
+    this.genesisBlockExists().then(exists => {
+      if (!exists) {
+        this.createGenesisBlock();
+      }
+    })
   }
 
-  // This method is done because I'm yet to know a better way to call an async
-  //  function from the constructor that belongs to the class
-  async genesisBlockExists() {
-    let height = await this.getBlockHeight();
-    if (height === -1) { return false; }
-    return true;
+  genesisBlockExists() {
+    return this.getBlockHeight().then(height => {
+      if (height === -1) { return false; }
+      return true;
+    });
   }
 
   // Add de genesis block 
@@ -146,8 +147,10 @@ class Blockchain{
     if (errorLog.length > 0) {
       console.log('Block errors = ' + errorLog.length);
       console.log('Blocks: '+ errorLog);
+      return false;
     } else {
       console.log('No errors detected');
+      return true;
     }
   }
 
