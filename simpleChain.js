@@ -2,23 +2,22 @@
 |  Learn more: Crypto-js: https://github.com/brix/crypto-js  |
 |========================================================== */
 
+const block = require('./block');
 const SHA256 = require('crypto-js/sha256');
 const levelSandbox = require('./levelSandbox');
-const block = require('./block');
-
 
 /* ===== Blockchain Class =======================
 |  Class with a constructor for new blockchain  |
 |============================================= */
 
-class Blockchain{
+class Blockchain {
 
   constructor() {
     this.genesisBlockExists().then(exists => {
       if (!exists) {
         this.createGenesisBlock();
       }
-    })
+    });
   }
 
   genesisBlockExists() {
@@ -33,9 +32,9 @@ class Blockchain{
     console.log('Block #0 - Genesis block');
     let genBlock = await new block.Block('Block #0 - Genesis block');
     console.log('Height: ', genBlock.height);
-    genBlock.time = await new Date().getTime().toString(); //.slice(0,-3);
+    genBlock.time = new Date().getTime().toString();
     console.log('Timestamp: ', genBlock.time);
-    genBlock.hash = await SHA256(JSON.stringify(genBlock)).toString();
+    genBlock.hash = SHA256(JSON.stringify(genBlock)).toString();
     console.log('Hash: ', genBlock.hash);
     let res = await levelSandbox.addLevelDBData(genBlock.height, JSON.stringify(genBlock).toString());
     console.log(res + '\n');
@@ -56,7 +55,7 @@ class Blockchain{
     console.log('Height: ', newBlock.height);
     
     // UTC timestamp
-    newBlock.time = await new Date().getTime().toString(); //.slice(0,-3);
+    newBlock.time = new Date().getTime().toString();
     console.log('Timestamp: ', newBlock.time);
 
     // Previous block hash
@@ -67,7 +66,7 @@ class Blockchain{
     console.log('Previous block hash: ', newBlock.previousBlockHash);
 
     // Block hash with SHA256
-    newBlock.hash = await SHA256(JSON.stringify(newBlock)).toString();
+    newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
     console.log('Hash: ', newBlock.hash);
     
     // Adding block to chain
@@ -96,7 +95,7 @@ class Blockchain{
     // remove block hash to test block integrity
     block.hash = '';
     // generate block hash
-    let validBlockHash = await SHA256(await JSON.stringify(block)).toString();
+    let validBlockHash = SHA256(await JSON.stringify(block)).toString();
     
     if (blockHash !== validBlockHash) {
       console.log('Block #' + blockHeight + ' invalid hash:\n' + blockHash + '<>' + validBlockHash);
@@ -171,3 +170,5 @@ class Blockchain{
 
 let bc = new Blockchain();
 setTimeout(async () => await bc.addBlocksAndTest(), 1000);
+
+module.exports.Blockchain = Blockchain;
