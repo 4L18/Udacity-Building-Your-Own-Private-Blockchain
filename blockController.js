@@ -30,9 +30,8 @@ class BlockController {
                 if(block) {
                     return res.status(200).json(block);
                 }
-            } else {
-                return res.status(404).send('Block Not Found');
             }
+            return res.status(404).send('Block Not Found');
         });
     }
 
