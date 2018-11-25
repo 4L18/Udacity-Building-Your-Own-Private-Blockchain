@@ -28,7 +28,7 @@ class BlockController {
                 const index = req.params.index;
                 const block = await this.blocks.getBlock(index);
                 if(block) {
-                    return res.status(200).json(block);
+                    return res.status(200).send(JSON.parse(block));
                 }
             }
             return res.status(404).send('Block Not Found');
