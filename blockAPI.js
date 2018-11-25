@@ -38,7 +38,7 @@ class BlockAPI {
      * Initilization of all the controllers
      */
 	initControllers() {
-		require("./BlockController.js")(this.app);
+		require("./blockController.js")(this.app);
 	}
 
     /**

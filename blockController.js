@@ -44,13 +44,14 @@ class BlockController {
             if (req.body.body == undefined) {
                 return res.status(400).send('Body can\'t be empty');
             }
+
             let newBlock = new block.Block(req.body.body);
             let height = await this.blocks.getBlockHeight();
-            newBlock.height = height;
+            let previousBlock = JSON.parse(await this.blocks.getBlock(height));
+            newBlock.previousBlockHash = previousBlock.hash;
+            newBlock.height = ++height;
             newBlock.time = new Date().getTime().toString();
             newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
-            let previousBlock = JSON.parse(await this.blocks.getBlock(height-1));
-            newBlock.previousBlockHash = previousBlock.hash;
             this.blocks.addBlock(newBlock);
             return res.status(200).json(newBlock);
         });
