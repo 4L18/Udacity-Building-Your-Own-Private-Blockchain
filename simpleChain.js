@@ -36,7 +36,7 @@ class Blockchain {
     console.log('Timestamp: ', genBlock.time);
     genBlock.hash = SHA256(JSON.stringify(genBlock)).toString();
     console.log('Hash: ', genBlock.hash);
-    let res = await levelSandbox.addLevelDBData(genBlock.height, JSON.stringify(genBlock).toString());
+    let res = await levelSandbox.addLevelDBData(genBlock.height, JSON.stringify(genBlock));
     console.log(res + '\n');
   }
 
@@ -70,7 +70,7 @@ class Blockchain {
     console.log('Hash: ', newBlock.hash);
     
     // Adding block to chain
-    let res = await levelSandbox.addLevelDBData(newBlock.height, JSON.stringify(newBlock).toString());
+    let res = await levelSandbox.addLevelDBData(newBlock.height, JSON.stringify(newBlock));
     console.log(res + '\n');
   }
 

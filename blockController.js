@@ -30,10 +30,18 @@ class BlockController {
                     const block = await this.blocks.getBlock(index);
                     return res.status(200).send(JSON.parse(block));
                 } catch (error) {
-                    return res.status(404).send('Block Not Found')
+                    let errorResponse = {
+                        "status": 404,
+                        "message": 'Block Not Found'
+                    }
+                    return res.status(404).send(errorResponse)
                 }
             }
-            return res.status(400).send('Bad request');
+            let errorResponse = {
+                "status": 400,
+                "message": 'Bad Request'
+            }
+            return res.status(400).send(errorResponse);
         });
     }
 
@@ -44,7 +52,11 @@ class BlockController {
         this.app.post("/block", async (req, res) => {
             let body = req.body.body;
             if (body == undefined || body === '') {
-                return res.status(400).send('Body can\'t be empty');
+                let errorResponse = {
+                    "status": 400,
+                    "message": 'Body can\'t be empty'
+                }
+                return res.status(400).send(errorResponse);
             }
             let newBlock = new block.Block(body);
             let height = await this.blocks.getBlockHeight();
