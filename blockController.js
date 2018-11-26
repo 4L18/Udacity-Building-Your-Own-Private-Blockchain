@@ -42,11 +42,11 @@ class BlockController {
      */
     postNewBlock() {
         this.app.post("/block", async (req, res) => {
-            
-            if (req.body.body == undefined) {
+            let body = req.body.body;
+            if (body == undefined || body === '') {
                 return res.status(400).send('Body can\'t be empty');
             }
-            let newBlock = new block.Block(req.body.body);
+            let newBlock = new block.Block(body);
             let height = await this.blocks.getBlockHeight();
             let previousBlock = JSON.parse(await this.blocks.getBlock(height));
             newBlock.previousBlockHash = previousBlock.hash;
