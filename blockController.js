@@ -23,15 +23,17 @@ class BlockController {
      */
     getBlockByIndex() {
         this.app.get("/block/:index", async (req, res) => {
-            
-            if(req.params.index) {
+            var index = req.params.index;
+            if(index && !isNaN(index)) {
                 const index = req.params.index;
-                const block = await this.blocks.getBlock(index);
-                if(block) {
+                try {
+                    const block = await this.blocks.getBlock(index);
                     return res.status(200).send(JSON.parse(block));
+                } catch (error) {
+                    return res.status(404).send('Block Not Found')
                 }
             }
-            return res.status(404).send('Block Not Found');
+            return res.status(400).send('Bad request');
         });
     }
 
@@ -44,7 +46,6 @@ class BlockController {
             if (req.body.body == undefined) {
                 return res.status(400).send('Body can\'t be empty');
             }
-
             let newBlock = new block.Block(req.body.body);
             let height = await this.blocks.getBlockHeight();
             let previousBlock = JSON.parse(await this.blocks.getBlock(height));
