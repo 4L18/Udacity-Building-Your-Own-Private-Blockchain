@@ -1,5 +1,5 @@
 # Udacity Blockchain Developer Project
-This project is made to build the necessary skills for a blockchain developer.
+This project creates a blockchain with 10 predefined blocks and allows you to get existing blocks and add new ones.
 
 ## Getting Started
 ### Prerequisites
