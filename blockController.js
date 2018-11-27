@@ -16,11 +16,11 @@ class BlockController {
         this.blocks = new simpleChain.Blockchain();
         this.getBlockByIndex();
         this.postNewBlock();
+        this.requestValidation();
+        this.mempool = [];
+        this.timeoutRequests = [];
     }
 
-    /**
-     * Implement a GET Endpoint to retrieve a block by index, url: "/api/block/:index"
-     */
     getBlockByIndex() {
         this.app.get("/block/:index", async (req, res) => {
             var index = req.params.index;
@@ -45,9 +45,6 @@ class BlockController {
         });
     }
 
-    /**
-     * Implement a POST Endpoint to add a new Block, url: "/api/block"
-     */
     postNewBlock() {
         this.app.post("/block", async (req, res) => {
             let body = req.body.body;
@@ -68,6 +65,45 @@ class BlockController {
             this.blocks.addBlock(newBlock);
             return res.status(200).json(newBlock);
         });
+    }
+
+    requestValidation() {
+        this.app.post("/requestValidation", async (req, res) => {
+            
+            let address = req.body.address;
+            let timestamp = new Date().getTime().toString();
+            if (address == undefined || address === '') {
+                let errorResponse = {
+                    "status": 400,
+                    "message": 'No address has been provided'
+                }
+                return res.status(400).json(errorResponse);
+            }
+            try {
+                let message = await this.addRequestValidation(address, timestamp);
+                let response = {
+                    "status": 200,
+                    "message": message
+                }
+                return res.status(200).json(response);
+            } catch (error) {
+                console.log('error', error);
+                let errorResponse = {
+                    "status": 400,
+                    "message": error
+                }
+                return res.status(400).json(errorResponse);
+            }
+        });
+    }
+
+    addRequestValidation(address, timestamp) {
+        if (this.mempool.includes(address)) {
+            return 'The request is already in the mempool';
+        };
+        this.mempool.push(address);
+        this.timeoutRequests.push(timestamp);
+        return 'The request has been added to the mempool';
     }
 }
 
