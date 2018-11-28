@@ -152,23 +152,7 @@ class Blockchain {
       return true;
     }
   }
-
-  async addBlocksAndTest() {
-
-    if (await this.getBlockHeight() === -1) {
-      await this.createGenesisBlock();
-    }
-
-    for (let i = 1; i <= 9; i++) {
-      await bc.addBlock(new block.Block('Block #' + i));
-      //await bc.validateBlock(i);
-    }
-    bc.validateChain();
-  }
 }
 
-
 let bc = new Blockchain();
-setTimeout(async () => await bc.addBlocksAndTest(), 1000);
-
 module.exports.Blockchain = Blockchain;

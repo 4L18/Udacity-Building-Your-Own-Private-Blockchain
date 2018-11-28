@@ -1,6 +1,7 @@
-const simpleChain = require('./simpleChain.js');
+const simpleChain = require('./simpleChain');
 const block = require('./block');
 const SHA256 = require('crypto-js/sha256');
+const mempool = require('./mempool');
 
 /**
  * Controller Definition to encapsulate routes to work with blocks
@@ -14,11 +15,10 @@ class BlockController {
     constructor(app) {
         this.app = app;
         this.blocks = new simpleChain.Blockchain();
+        this.mempool = new mempool.Mempool();
         this.getBlockByIndex();
         this.postNewBlock();
         this.requestValidation();
-        this.mempool = [];
-        this.timeoutRequests = [];
     }
 
     getBlockByIndex() {
@@ -72,6 +72,7 @@ class BlockController {
             
             let address = req.body.address;
             let timestamp = new Date().getTime().toString();
+
             if (address == undefined || address === '') {
                 let errorResponse = {
                     "status": 400,
@@ -79,11 +80,12 @@ class BlockController {
                 }
                 return res.status(400).json(errorResponse);
             }
+
             try {
-                let message = await this.addRequestValidation(address, timestamp);
+                let requestObject = await this.mempool.addRequestValidation(address, timestamp);
                 let response = {
                     "status": 200,
-                    "message": message
+                    "message": requestObject
                 }
                 return res.status(200).json(response);
             } catch (error) {
@@ -95,15 +97,6 @@ class BlockController {
                 return res.status(400).json(errorResponse);
             }
         });
-    }
-
-    addRequestValidation(address, timestamp) {
-        if (this.mempool.includes(address)) {
-            return 'The request is already in the mempool';
-        };
-        this.mempool.push(address);
-        this.timeoutRequests.push(timestamp);
-        return 'The request has been added to the mempool';
     }
 }
 
