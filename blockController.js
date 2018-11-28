@@ -19,6 +19,7 @@ class BlockController {
         this.getBlockByIndex();
         this.postNewBlock();
         this.requestValidation();
+        this.validate();
     }
 
     getBlockByIndex() {
@@ -88,6 +89,48 @@ class BlockController {
                     "message": requestObject
                 }
                 return res.status(200).json(response);
+            } catch (error) {
+                console.log('error', error);
+                let errorResponse = {
+                    "status": 400,
+                    "message": error
+                }
+                return res.status(400).json(errorResponse);
+            }
+        });
+    }
+
+    validate() {
+        this.app.post("/message-signature/validate", async (req, res) => {
+            let address = req.body.address;
+            let signature = req.body.signature;
+            
+            if (address == undefined || address === '' ||
+                signature == undefined || signature === '') {
+
+                let errorResponse = {
+                    "status": 400,
+                    "message": 'Must provide address and signature for validation'
+                }
+                return res.status(400).json(errorResponse);
+            }
+
+            try {
+                let requestResponse = await this.mempool.validateRequestByWallet(address, signature);
+                if (typeof requestResponse === 'string') {
+                    let errorResponse = {
+                        "status": 400,
+                        "message": requestResponse
+                    }
+                    return res.status(400).json(errorResponse);
+                }
+
+                let response = {
+                    "status": 200,
+                    "message": requestResponse
+                }
+                return res.status(200).json(response);
+
             } catch (error) {
                 console.log('error', error);
                 let errorResponse = {
