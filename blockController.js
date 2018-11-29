@@ -20,7 +20,8 @@ class BlockController {
         this.getBlockByIndex();
         this.getBlockByHash();
         this.getBlockByAddress();
-        this.postNewBlock();
+        this.getBlockByHeight();
+        this.postBlock();
         this.requestValidation();
         this.validate();
     }
@@ -31,7 +32,7 @@ class BlockController {
             if(index && !isNaN(index)) {
                 try {
                     const block = await this.blocks.getBlock(index);
-                    return res.status(200).send(JSON.parse(block));
+                    return res.status(200).json(JSON.parse(block));
                 } catch (error) {
                     let errorResponse = {
                         "status": 404,
@@ -49,7 +50,7 @@ class BlockController {
     }
 
     getBlockByHash() {
-        this.app.get("/stars/hash:hash", async (req, res) => {
+        this.app.get("/stars/hash/:hash", async (req, res) => {
             let hashRequested = req.params.hash;
             try {
                 const block = await levelSandbox.getBlockByHash(hashRequested);
@@ -66,10 +67,10 @@ class BlockController {
     }
 
     getBlockByAddress() {
-        this.app.get("/stars/address:address", async (req, res) => {
+        this.app.get("/stars/address/:address", async (req, res) => {
             let addressRequested = req.params.address;
             try {
-                const block = await levelSandbox.getBlockByHash(addressRequested);
+                const block = await levelSandbox.getBlockByWalletAddress(addressRequested);
                 return res.status(200).json(block);
             } catch (error) {
                 console.log(error);
@@ -82,7 +83,24 @@ class BlockController {
         });
     }
 
-    postNewBlock() {
+    getBlockByHeight() {
+        this.app.get("/stars/height/:height", async (req, res) => {
+            let heightRequested = req.params.height;
+            try {
+                const block = await levelSandbox.getLevelDBData(heightRequested);
+                return res.status(200).json(JSON.parse(block));
+            } catch (error) {
+                console.log(error);
+                let errorResponse = {
+                    "status": 404,
+                    "message": 'Block Not Found'
+                }
+                return res.status(404).send(errorResponse)
+            }
+        });
+    }
+
+    postBlock() {
         this.app.post("/block", async (req, res) => {
             
             try {
