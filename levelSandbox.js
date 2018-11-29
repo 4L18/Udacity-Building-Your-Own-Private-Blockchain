@@ -61,7 +61,26 @@ function getBlocksCount() {
     });
   });
 }
-module.exports = {addLevelDBData, getLevelDBData, getBlocksCount}
+
+function getBlockByHash(hash) {
+  return new Promise(function(resolve, reject) {
+    let block;
+    db.createReadStream()
+    .on('data', function (data) {
+      block = JSON.parse(data.value);
+      if (block.hash == hash) {
+        return;
+      }
+    })
+    .on('error', function (err) {
+      reject(err)
+    })
+    .on('close', function () {
+      resolve(block);
+    });
+  });
+}
+module.exports = {addLevelDBData, getLevelDBData, getBlocksCount, getBlockByHash}
 /* ===== Testing ==============================================================|
 |  - Self-invoking function to add blocks to chain                             |
 |  - Learn more:                                                               |

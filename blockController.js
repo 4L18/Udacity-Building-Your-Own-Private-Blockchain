@@ -1,7 +1,8 @@
-const blockchain = require('./blockchain');
 const block = require('./block');
-const SHA256 = require('crypto-js/sha256');
+const blockchain = require('./blockchain');
+const levelSandbox = require('./levelSandbox');
 const mempool = require('./mempool');
+const SHA256 = require('crypto-js/sha256');
 
 /**
  * Controller Definition to encapsulate routes to work with blocks
@@ -17,6 +18,7 @@ class BlockController {
         this.blocks = new blockchain.Blockchain();
         this.mempool = new mempool.Mempool();
         this.getBlockByIndex();
+        this.getBlockByHash();
         this.postNewBlock();
         this.requestValidation();
         this.validate();
@@ -24,9 +26,8 @@ class BlockController {
 
     getBlockByIndex() {
         this.app.get("/block/:index", async (req, res) => {
-            var index = req.params.index;
+            let index = req.params.index;
             if(index && !isNaN(index)) {
-                const index = req.params.index;
                 try {
                     const block = await this.blocks.getBlock(index);
                     return res.status(200).send(JSON.parse(block));
@@ -43,6 +44,23 @@ class BlockController {
                 "message": 'Bad Request'
             }
             return res.status(400).send(errorResponse);
+        });
+    }
+
+    getBlockByHash() {
+        this.app.get("/stars/:hash", async (req, res) => {
+            let hashRequested = req.params.hash;
+            try {
+                const block = await levelSandbox.getBlockByHash(hashRequested);
+                return res.status(200).json(block);
+            } catch (error) {
+                console.log(error);
+                let errorResponse = {
+                    "status": 404,
+                    "message": 'Block Not Found'
+                }
+                return res.status(404).send(errorResponse)
+            }
         });
     }
 
