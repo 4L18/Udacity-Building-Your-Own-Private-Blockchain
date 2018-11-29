@@ -80,7 +80,29 @@ function getBlockByHash(hash) {
     });
   });
 }
-module.exports = {addLevelDBData, getLevelDBData, getBlocksCount, getBlockByHash}
+
+function getBlockByWalletAddress(address) {
+  return new Promise(function(resolve, reject) {
+    let block;
+    db.createReadStream()
+    .on('data', function (data) {
+      block = JSON.parse(data.value);
+      if (block.body.address == address) {
+        return;
+      }
+    })
+    .on('error', function (err) {
+      reject(err)
+    })
+    .on('close', function () {
+      resolve(block);
+    });
+  });
+}
+
+
+
+module.exports = {addLevelDBData, getLevelDBData, getBlocksCount, getBlockByHash, getBlockByWalletAddress}
 /* ===== Testing ==============================================================|
 |  - Self-invoking function to add blocks to chain                             |
 |  - Learn more:                                                               |

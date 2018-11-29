@@ -19,6 +19,7 @@ class BlockController {
         this.mempool = new mempool.Mempool();
         this.getBlockByIndex();
         this.getBlockByHash();
+        this.getBlockByAddress();
         this.postNewBlock();
         this.requestValidation();
         this.validate();
@@ -48,10 +49,27 @@ class BlockController {
     }
 
     getBlockByHash() {
-        this.app.get("/stars/:hash", async (req, res) => {
+        this.app.get("/stars/hash:hash", async (req, res) => {
             let hashRequested = req.params.hash;
             try {
                 const block = await levelSandbox.getBlockByHash(hashRequested);
+                return res.status(200).json(block);
+            } catch (error) {
+                console.log(error);
+                let errorResponse = {
+                    "status": 404,
+                    "message": 'Block Not Found'
+                }
+                return res.status(404).send(errorResponse)
+            }
+        });
+    }
+
+    getBlockByAddress() {
+        this.app.get("/stars/address:address", async (req, res) => {
+            let addressRequested = req.params.address;
+            try {
+                const block = await levelSandbox.getBlockByHash(addressRequested);
                 return res.status(200).json(block);
             } catch (error) {
                 console.log(error);
