@@ -92,6 +92,14 @@ class Mempool {
             return error;
         }
     }
+
+    verifyAddressRequest(address) {
+        let validReq = this.validatedRequests.find(req => {
+            return req.status.address === address;
+        });
+        if (validReq === undefined) { return false; }
+        return true;
+    }
 }
 
 module.exports.Mempool = Mempool;

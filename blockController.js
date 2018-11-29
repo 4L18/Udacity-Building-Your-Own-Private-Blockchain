@@ -1,4 +1,4 @@
-const simpleChain = require('./simpleChain');
+const blockchain = require('./blockchain');
 const block = require('./block');
 const SHA256 = require('crypto-js/sha256');
 const mempool = require('./mempool');
@@ -14,7 +14,7 @@ class BlockController {
      */
     constructor(app) {
         this.app = app;
-        this.blocks = new simpleChain.Blockchain();
+        this.blocks = new blockchain.Blockchain();
         this.mempool = new mempool.Mempool();
         this.getBlockByIndex();
         this.postNewBlock();
@@ -48,41 +48,75 @@ class BlockController {
 
     postNewBlock() {
         this.app.post("/block", async (req, res) => {
-            let body = req.body.body;
-            if (body == undefined || body === '') {
+            
+            try {
+                let body = req.body;
+                if (body == undefined || body === '') {
+                    throw 'Body can\'t be empty'
+                }
+
+                if (!this.requestIsValid(body)) {
+                    throw 'Invalid request'
+                }
+
+                let data = {
+                    "address": body.address,
+                    "star": {
+                        "ra": body.star.ra,
+                        "dec": body.star.dec,
+                        "mag": body.star.mag,
+                        "cen": body.star.cen,
+                        "story": Buffer(body.star.story).toString('hex'),
+                    }
+                };
+
+                let newBlock = new block.Block(data);
+                await this.blocks.addBlock(newBlock);
+                newBlock = await this.blocks.getBlock(await this.blocks.getBlockHeight());
+                return res.status(200).json(JSON.parse(newBlock));
+            } catch (error) {
                 let errorResponse = {
                     "status": 400,
-                    "message": 'Body can\'t be empty'
+                    "message": error
                 }
-                return res.status(400).send(errorResponse);
+                return res.status(400).json(errorResponse);
             }
-            let newBlock = new block.Block(body);
-            let height = await this.blocks.getBlockHeight();
-            let previousBlock = JSON.parse(await this.blocks.getBlock(height));
-            newBlock.previousBlockHash = previousBlock.hash;
-            newBlock.height = ++height;
-            newBlock.time = new Date().getTime().toString();
-            newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
-            this.blocks.addBlock(newBlock);
-            return res.status(200).json(newBlock);
         });
+    }
+
+    async requestIsValid(body) {
+        try {
+            if (!body.star.story) {
+                throw 'Your story seems to be empty, please double check.';
+            }
+            let isASCII = /^[\x00-\x7F]*$/.test(body.star.story)
+            if (!isASCII) {
+                throw "Your story should contain only ASCII characters!";
+            }
+            let storyTooLong = body.star.story.length > 500 ? true : false
+            if (storyTooLong) {
+                throw 'Your story exceeds the limit of 250 words';
+            }
+            let addressIsVerified = await this.mempool.verifyAddressRequest(body.address);
+            if (!addressIsVerified) {
+                throw 'Address has not been verified';
+            }
+            return true;
+        } catch (error) {
+            console.log(error);
+            return false;
+        }
     }
 
     requestValidation() {
         this.app.post("/requestValidation", async (req, res) => {
-            
-            let address = req.body.address;
-            let timestamp = new Date().getTime().toString();
-
-            if (address == undefined || address === '') {
-                let errorResponse = {
-                    "status": 400,
-                    "message": 'No address has been provided'
-                }
-                return res.status(400).json(errorResponse);
-            }
 
             try {
+                let address = req.body.address;
+                let timestamp = new Date().getTime().toString();
+                if (address == undefined || address === '') {
+                    throw 'No address has been provided'
+                }
                 let requestObject = await this.mempool.addRequestValidation(address, timestamp);
                 let response = {
                     "status": 200,
@@ -102,29 +136,20 @@ class BlockController {
 
     validate() {
         this.app.post("/message-signature/validate", async (req, res) => {
-            let address = req.body.address;
-            let signature = req.body.signature;
             
-            if (address == undefined || address === '' ||
-                signature == undefined || signature === '') {
-
-                let errorResponse = {
-                    "status": 400,
-                    "message": 'Must provide address and signature for validation'
-                }
-                return res.status(400).json(errorResponse);
-            }
-
             try {
+                let address = req.body.address;
+                let signature = req.body.signature;           
+                if (address == undefined || address === '' ||
+                    signature == undefined || signature === '') {
+
+                    throw "The address or the signature is empty or wrong formated"
+                }
                 let requestResponse = await this.mempool.validateRequestByWallet(address, signature);
                 if (typeof requestResponse === 'string') {
-                    let errorResponse = {
-                        "status": 400,
-                        "message": requestResponse
-                    }
-                    return res.status(400).json(errorResponse);
-                }
 
+                    throw requestResponse;
+                }
                 let response = {
                     "status": 200,
                     "message": requestResponse
@@ -132,7 +157,6 @@ class BlockController {
                 return res.status(200).json(response);
 
             } catch (error) {
-                console.log('error', error);
                 let errorResponse = {
                     "status": 400,
                     "message": error

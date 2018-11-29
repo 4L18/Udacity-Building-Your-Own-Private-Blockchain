@@ -44,7 +44,7 @@ class Blockchain {
   async addBlock(newBlock) {
 
     if (!this.genesisBlockExists()) {
-      createGenesisBlock();
+      await createGenesisBlock();
     }
 
     console.log(newBlock.body);
