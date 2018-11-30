@@ -1,5 +1,6 @@
 const block = require('./block');
 const blockchain = require('./blockchain');
+const hex2ascii = require('hex2ascii');
 const levelSandbox = require('./levelSandbox');
 const mempool = require('./mempool');
 const SHA256 = require('crypto-js/sha256');
@@ -19,7 +20,7 @@ class BlockController {
         this.mempool = new mempool.Mempool();
         this.getBlockByIndex();
         this.getBlockByHash();
-        this.getBlockByAddress();
+        this.getBlocksByAddress();
         this.getBlockByHeight();
         this.postBlock();
         this.requestValidation();
@@ -53,7 +54,8 @@ class BlockController {
         this.app.get("/stars/hash::hash", async (req, res) => {
             let hashRequested = req.params.hash;
             try {
-                const block = await levelSandbox.getBlockByHash(hashRequested);
+                let block = await levelSandbox.getBlockByHash(hashRequested);
+                block = this.decodeBlock(block);
                 return res.status(200).json(block);
             } catch (error) {
                 console.log(error);
@@ -66,17 +68,20 @@ class BlockController {
         });
     }
 
-    getBlockByAddress() {
+    getBlocksByAddress() {
         this.app.get("/stars/address::address", async (req, res) => {
             let addressRequested = req.params.address;
             try {
-                const block = await levelSandbox.getBlockByWalletAddress(addressRequested);
-                return res.status(200).json(block);
+                let blocks = await levelSandbox.getBlocksByWalletAddress(addressRequested);
+                for (let i = 0; i < blocks.length; i++) {
+                    blocks[i] = this.decodeBlock(JSON.stringify(blocks[i]));
+                }
+                return res.status(200).json(blocks);
             } catch (error) {
                 console.log(error);
                 let errorResponse = {
                     "status": 404,
-                    "message": 'Block Not Found'
+                    "message": 'Blocks Not Found'
                 }
                 return res.status(404).send(errorResponse)
             }
@@ -87,8 +92,9 @@ class BlockController {
         this.app.get("/stars/height::height", async (req, res) => {
             let heightRequested = req.params.height;
             try {
-                const block = await levelSandbox.getLevelDBData(heightRequested);
-                return res.status(200).json(JSON.parse(block));
+                let block = await levelSandbox.getLevelDBData(heightRequested);
+                block = this.decodeBlock(block);
+                return res.status(200).json(block);
             } catch (error) {
                 console.log(error);
                 let errorResponse = {
@@ -102,17 +108,14 @@ class BlockController {
 
     postBlock() {
         this.app.post("/block", async (req, res) => {
-            
+                
             try {
                 let body = req.body;
-                if (body == undefined || body === '') {
-                    throw 'Body can\'t be empty'
+                let validation = await this.requestIsValid(body);
+                if (validation !== true) {
+                    console.log(validation);
+                    throw validation;
                 }
-
-                if (!this.requestIsValid(body)) {
-                    throw 'Invalid request'
-                }
-
                 let data = {
                     "address": body.address,
                     "star": {
@@ -127,39 +130,66 @@ class BlockController {
                 let newBlock = new block.Block(data);
                 await this.blocks.addBlock(newBlock);
                 newBlock = await this.blocks.getBlock(await this.blocks.getBlockHeight());
-                return res.status(200).json(JSON.parse(newBlock));
+                newBlock = this.decodeBlock(newBlock);
+                return res.status(200).json(newBlock);
+
             } catch (error) {
                 let errorResponse = {
                     "status": 400,
                     "message": error
                 }
-                return res.status(400).json(errorResponse);
+                return res.status(400).send(errorResponse);
             }
         });
     }
 
     async requestIsValid(body) {
         try {
-            if (!body.star.story) {
-                throw 'Your story seems to be empty, please double check.';
+            if (body == undefined || body === '') {
+                throw 'Body can\'t be empty.'
             }
+
+            if (!body.star.ra || !body.star.dec) {
+                throw 'Both right ascension and declination are required.'
+            }
+
+            if (!body.star.story) {
+                throw 'Your story seems to be empty.';
+            }
+
             let isASCII = /^[\x00-\x7F]*$/.test(body.star.story)
             if (!isASCII) {
-                throw "Your story should contain only ASCII characters!";
+                throw 'Your story should contain only ASCII characters.';
             }
+
             let storyTooLong = body.star.story.length > 500 ? true : false
             if (storyTooLong) {
-                throw 'Your story exceeds the limit of 250 words';
+                throw 'Your story exceeds the limit of 250 words.';
             }
+
             let addressIsVerified = await this.mempool.verifyAddressRequest(body.address);
             if (!addressIsVerified) {
-                throw 'Address has not been verified';
+                throw 'Address has not been verified.';
             }
             return true;
         } catch (error) {
-            console.log(error);
-            return false;
+            return error;
         }
+    }
+
+    decodeBlock(block) {
+        let jsonBlock;
+        if (typeof block === 'string') {
+            jsonBlock = JSON.parse(block);
+        } else {
+            jsonBlock = block;
+        }
+        if (jsonBlock.height != 0) {
+            let storyEncoded = `0x${jsonBlock.body.star.story}`;
+            let storyDecoded = hex2ascii(storyEncoded);
+            jsonBlock.body.star.storyDecoded = storyDecoded;
+        }
+        return jsonBlock;
     }
 
     requestValidation() {

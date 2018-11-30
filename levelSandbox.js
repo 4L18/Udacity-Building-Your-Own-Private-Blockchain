@@ -22,8 +22,8 @@ function getLevelDBData(key) {
     db.get(key, function(err, value) {
       if (err) reject('Not found!', err);
       resolve(value);
-    })
-  })
+    });
+  });
 }
 
 // Add data to levelDB with value
@@ -69,7 +69,7 @@ function getBlockByHash(hash) {
     .on('data', function (data) {
       block = JSON.parse(data.value);
       if (block.hash == hash) {
-        return;
+        resolve(block);
       }
     })
     .on('error', function (err) {
@@ -81,28 +81,28 @@ function getBlockByHash(hash) {
   });
 }
 
-function getBlockByWalletAddress(address) {
+function getBlocksByWalletAddress(address) {
   return new Promise(function(resolve, reject) {
-    let block;
+    let blocks = [];
     db.createReadStream()
     .on('data', function (data) {
       block = JSON.parse(data.value);
       if (block.body.address == address) {
-        return;
+        blocks.push(block);
       }
     })
     .on('error', function (err) {
       reject(err)
     })
     .on('close', function () {
-      resolve(block);
+      resolve(blocks);
     });
   });
 }
 
 
 
-module.exports = {addLevelDBData, getLevelDBData, getBlocksCount, getBlockByHash, getBlockByWalletAddress}
+module.exports = {addLevelDBData, getLevelDBData, getBlocksCount, getBlockByHash, getBlocksByWalletAddress}
 /* ===== Testing ==============================================================|
 |  - Self-invoking function to add blocks to chain                             |
 |  - Learn more:                                                               |

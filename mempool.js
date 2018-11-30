@@ -48,7 +48,7 @@ class Mempool {
         let addressIndex = this.validationRequests.indexOf(walletAddress);
         this.validationRequests.splice(addressIndex, 1);
         this.requestsTimeouts.splice(addressIndex, 1);
-    };
+    }
 
     calculateTimeLeft(timestamp) {
         let timeElapse = new Date().getTime().toString() - timestamp;

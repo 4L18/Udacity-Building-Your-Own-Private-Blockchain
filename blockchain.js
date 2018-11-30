@@ -47,7 +47,7 @@ class Blockchain {
       await createGenesisBlock();
     }
 
-    console.log(newBlock.body);
+    console.log('Body:\n', newBlock.body);
 
     // Block height
     let height = await this.getBlockHeight();
