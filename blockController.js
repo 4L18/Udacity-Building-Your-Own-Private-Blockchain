@@ -50,7 +50,7 @@ class BlockController {
     }
 
     getBlockByHash() {
-        this.app.get("/stars/hash/:hash", async (req, res) => {
+        this.app.get("/stars/hash::hash", async (req, res) => {
             let hashRequested = req.params.hash;
             try {
                 const block = await levelSandbox.getBlockByHash(hashRequested);
@@ -67,7 +67,7 @@ class BlockController {
     }
 
     getBlockByAddress() {
-        this.app.get("/stars/address/:address", async (req, res) => {
+        this.app.get("/stars/address::address", async (req, res) => {
             let addressRequested = req.params.address;
             try {
                 const block = await levelSandbox.getBlockByWalletAddress(addressRequested);
@@ -84,7 +84,7 @@ class BlockController {
     }
 
     getBlockByHeight() {
-        this.app.get("/stars/height/:height", async (req, res) => {
+        this.app.get("/stars/height::height", async (req, res) => {
             let heightRequested = req.params.height;
             try {
                 const block = await levelSandbox.getLevelDBData(heightRequested);
