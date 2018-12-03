@@ -129,6 +129,7 @@ class BlockController {
 
                 let newBlock = new block.Block(data);
                 await this.blocks.addBlock(newBlock);
+                await this.mempool.removeValidatedRequest(body.address);
                 newBlock = await this.blocks.getBlock(await this.blocks.getBlockHeight());
                 newBlock = this.decodeBlock(newBlock);
                 return res.status(200).json(newBlock);

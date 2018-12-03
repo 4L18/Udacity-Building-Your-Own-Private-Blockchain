@@ -5,8 +5,9 @@ class Mempool {
     constructor() {
         this.timeoutRequestsWindowTime = 5*60*1000;
         this.validationRequests = [];
-        this.requestsTimeouts = [];
+        this.validationRequestsTimeouts = [];
         this.validatedRequests = [];
+        this.validatedRequestsTimeouts = [];
     }
 
     addRequestValidation(wallet, timestamp) {
@@ -30,7 +31,7 @@ class Mempool {
             requestObject.validationWindow = this.timeoutRequestsWindowTime;
 
             this.validationRequests.push(requestObject);
-            this.requestsTimeouts.push(setTimeout(() => {
+            this.validationRequestsTimeouts.push(setTimeout(() => {
                 this.removeValidationRequest(wallet)
             }, this.timeoutRequestsWindowTime));
 
@@ -47,7 +48,7 @@ class Mempool {
     removeValidationRequest(walletAddress) {
         let addressIndex = this.validationRequests.indexOf(walletAddress);
         this.validationRequests.splice(addressIndex, 1);
-        this.requestsTimeouts.splice(addressIndex, 1);
+        this.validationRequestsTimeouts.splice(addressIndex, 1);
     }
 
     calculateTimeLeft(timestamp) {
@@ -66,7 +67,7 @@ class Mempool {
             return 'Your request has expired';
         }
 
-        this.requestsTimeouts.splice(requestIndex, 1);
+        this.validationRequestsTimeouts.splice(requestIndex, 1);
         let req = this.validationRequests.splice(requestIndex, 1)[0];
         let message = req.message
         let isValid = bitcoinMessage.verify(req.message, req.walletAddress, signature);
@@ -87,6 +88,9 @@ class Mempool {
                 }
             }
             this.validatedRequests.push(validRequest);
+            this.validatedRequestsTimeouts.push(setTimeout(() => {
+                this.removeValidatedRequest(req.message)
+            }, this.timeoutRequestsWindowTime));
             return validRequest;
         } catch (error) {
             return error;
@@ -99,6 +103,14 @@ class Mempool {
         });
         if (validReq === undefined) { return false; }
         return true;
+    }
+    
+    removeValidatedRequest(walletAddress) {
+        let addressIndex = this.validatedRequests.findIndex(req => {
+            return req.status.address = walletAddress;
+        });
+        this.validatedRequests.splice(addressIndex, 1);
+        this.validatedRequestsTimeouts.splice(addressIndex, 1);
     }
 }
 
