@@ -32,7 +32,8 @@ class BlockController {
             let index = req.params.index;
             if(index && !isNaN(index)) {
                 try {
-                    const block = await this.blocks.getBlock(index);
+                    let block = await this.blocks.getBlock(index);
+                    block = this.decodeBlock(block);
                     return res.status(200).json(JSON.parse(block));
                 } catch (error) {
                     let errorResponse = {
