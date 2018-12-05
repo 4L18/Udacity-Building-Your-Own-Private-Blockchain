@@ -18,36 +18,29 @@ class BlockController {
         this.app = app;
         this.blocks = new blockchain.Blockchain();
         this.mempool = new mempool.Mempool();
-        this.getBlockByIndex();
+        this.getBlockByHeight();
         this.getBlockByHash();
         this.getBlocksByAddress();
-        this.getBlockByHeight();
         this.postBlock();
         this.requestValidation();
         this.validate();
     }
 
-    getBlockByIndex() {
-        this.app.get("/block/:index", async (req, res) => {
-            let index = req.params.index;
-            if(index && !isNaN(index)) {
-                try {
-                    let block = await this.blocks.getBlock(index);
-                    block = this.decodeBlock(block);
-                    return res.status(200).json(JSON.parse(block));
-                } catch (error) {
-                    let errorResponse = {
-                        "status": 404,
-                        "message": 'Block Not Found'
-                    }
-                    return res.status(404).send(errorResponse)
+    getBlockByHeight() {
+        this.app.get("/block/:height", async (req, res) => {
+            let heightRequested = req.params.height;
+            try {
+                let block = await levelSandbox.getLevelDBData(heightRequested);
+                block = this.decodeBlock(block);
+                return res.status(200).json(block);
+            } catch (error) {
+                console.log(error);
+                let errorResponse = {
+                    "status": 404,
+                    "message": 'Block Not Found'
                 }
+                return res.status(404).send(errorResponse)
             }
-            let errorResponse = {
-                "status": 400,
-                "message": 'Bad Request'
-            }
-            return res.status(400).send(errorResponse);
         });
     }
 
@@ -83,24 +76,6 @@ class BlockController {
                 let errorResponse = {
                     "status": 404,
                     "message": 'Blocks Not Found'
-                }
-                return res.status(404).send(errorResponse)
-            }
-        });
-    }
-
-    getBlockByHeight() {
-        this.app.get("/stars/height::height", async (req, res) => {
-            let heightRequested = req.params.height;
-            try {
-                let block = await levelSandbox.getLevelDBData(heightRequested);
-                block = this.decodeBlock(block);
-                return res.status(200).json(block);
-            } catch (error) {
-                console.log(error);
-                let errorResponse = {
-                    "status": 404,
-                    "message": 'Block Not Found'
                 }
                 return res.status(404).send(errorResponse)
             }
