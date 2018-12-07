@@ -1,6 +1,6 @@
-/* ===== Persist data with LevelDB ===================================
+/* ===== Persist data with LevelDB =======================
 |  Learn more: level: https://github.com/Level/level     |
-|  =============================================================*/
+|  ==================================================== */
 
 const level = require('level');
 const chainDB = './chaindata';

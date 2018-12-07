@@ -1,5 +1,5 @@
-# Udacity Blockchain Developer Project
-This project creates a blockchain and allows you to get existing blocks and add new ones.
+# Udacity Private Blockchain Notary Service Project
+This project creates a blockchain, allows you to add stars to it and get them by height, hash or address.
 
 ## Getting Started
 ### Prerequisites
@@ -16,31 +16,142 @@ All you need to do is type `npm install` in your console.
 In the console move to project's directory and type `node blockAPI.js`.
 
 ## Usage
-### GET Block Endpoint
+In order to add a star to the blockchain is needed to follow the next steps in the same order.
+### Request a validation
 #### URL
-> http://localhost:8000/block/:index
-##### Method
-GET
-##### URL params
-###### Required
-`index=[integer]`
-The index must be equal or greater than 0. Example: index = 5
-##### Example URL path:
-> http://localhost:8000/block/5, where '5' is the block height.
+> http://localhost:8000/requestValidation
+#### Method
+POST
+#### Data params
+The body must contain the address which you want to sign the transaction with.
+##### Example:
+```
+{
+    "address":"124zuqjNvWQT9WJwTyCSr9fR5xVbQipp2N"
+}
+```
 #### Success response
 **Code:** 200 OK
 **Content:**
 ```
 {
-    "hash": "bc1bb760c3feeb455d01e40309c34675d48380e859967abc0fe1201605c2a959",
-    "height": 5,
-    "body": "Block #5",
-    "time": "1543248985555",
-    "previousBlockHash": "0baa648acf05b1ce7e423a68e989261bcf8a79eba731f70141f95323073e3aac"
+    "status": 200,
+    "message": {
+        "walletAddress": "124zuqjNvWQT9WJwTyCSr9fR5xVbQipp2N",
+        "requestTimeStamp": "1544176236414",
+        "message": "124zuqjNvWQT9WJwTyCSr9fR5xVbQipp2N:1544176236414:starRegistry",
+        "validationWindow": 300000
+    }
+}
+```
+
+### Validate
+Take the message given in the response of the previous step and sign it with the account asociated to the address you provided in first place.
+#### URL
+> http://localhost:8000/message-signature/validate
+#### Method
+POST
+#### Data params
+The body must contain the address that has been used and the signature of the message.
+##### Example:
+```
+{
+    "address":"124zuqjNvWQT9WJwTyCSr9fR5xVbQipp2N",
+    "signature":"IN8cqpNijckAyanNPxukxae37/wn+fsYxI2spvdayCZlaIHDoIrSV70dwZQMG+tr7deP7IwL40yxfg0Xcerk3yU="
+}
+```
+#### Success response
+**Code:** 200 OK
+**Content:**
+```
+{
+    "status": 200,
+    "message": {
+        "registerStar": true,
+        "status": {
+            "address": "124zuqjNvWQT9WJwTyCSr9fR5xVbQipp2N",
+            "requestTimeStamp": "1544176236414",
+            "message": "124zuqjNvWQT9WJwTyCSr9fR5xVbQipp2N:1544176236414:starRegistry",
+            "validationWindow": 254672,
+            "messageSignature": true
+        }
+    }
+}
+```
+
+### Post star endpoint
+Once the request has been validated the info of the star must be sent.
+#### URL
+> http://localhost:8000/block
+#### Method
+POST
+#### Data params
+The body must have the data of the star as shown in the example.
+##### Example:
+```
+{
+	"address": "124zuqjNvWQT9WJwTyCSr9fR5xVbQipp2N",
+    "star": {
+            "dec": "68° 52' 56.9",
+            "ra": "16h 29m 1.0s",
+            "story": "Found star using https://www.google.com/sky/"
+        }
+}
+```
+#### Success response
+**Code:** 200 OK
+**Content:**
+```
+{
+    "hash": "faee86eee0f4b16065fe5805c7c1e8ded6080cac6e80fe1653c8458012c821ab",
+    "height": 1,
+    "body": {
+        "address": "124zuqjNvWQT9WJwTyCSr9fR5xVbQipp2N",
+        "star": {
+            "ra": "16h 29m 1.0s",
+            "dec": "68° 52' 56.9",
+            "story": "466f756e642073746172207573696e672068747470733a2f2f7777772e676f6f676c652e636f6d2f736b792f",
+            "storyDecoded": "Found star using https://www.google.com/sky/"
+        }
+    },
+    "time": "1544170915615",
+    "previousBlockHash": "b1fd22dfb227709bce80ace31a896ab91f148d9b358b3a90501a0504dc84ecd8"
+}
+```
+
+### Get block by height endpoint
+#### URL
+> http://localhost:8000/block/:height
+#### Method
+GET
+#### URL params
+##### Required
+`:height=[integer]`
+The height must be equal or greater than 0. Example: height = 1
+##### Example URL path:
+> http://localhost:8000/block/1, where '1' is the block height.
+#### Success response
+**Code:** 200 OK
+**Content:**
+```
+{
+    "hash": "faee86eee0f4b16065fe5805c7c1e8ded6080cac6e80fe1653c8458012c821ab",
+    "height": 1,
+    "body": {
+        "address": "124zuqjNvWQT9WJwTyCSr9fR5xVbQipp2N",
+        "star": {
+            "ra": "16h 29m 1.0s",
+            "dec": "68° 52' 56.9",
+            "story": "466f756e642073746172207573696e672068747470733a2f2f7777772e676f6f676c652e636f6d2f736b792f",
+            "storyDecoded": "Found star using https://www.google.com/sky/"
+        }
+    },
+    "time": "1544170915615",
+    "previousBlockHash": "b1fd22dfb227709bce80ace31a896ab91f148d9b358b3a90501a0504dc84ecd8"
 }
 ```
 #### Error response
-If the index provided in the URL is not in the blockchain the call will return:
+If the height provided in the URL is not in the blockchain the call will return:
 **Code:** 404 Not Found
 **Content:**
 ```
@@ -49,7 +160,7 @@ If the index provided in the URL is not in the blockchain the call will return:
     "message": "Block Not Found"
 }
 ```
-If the index provided is not a number the call will return:
+If the height provided is not a number the call will return:
 **Code:** 400 Not Found
 **Content:**
 ```
@@ -58,38 +169,80 @@ If the index provided is not a number the call will return:
     "message": "Bad Request"
 }
 ```
-### POST Block Endpoint
+
+### Get block by hash endpoint
 #### URL
-> http://localhost:8000/block
+> http://localhost:8000/stars/hash::hash
 ##### Method
-POST
-##### Data params
-The body must not be empty for the block to be valid.
-##### Example:
-```
-{
-      "body": "Testing block with test string data"
-}
-```
+GET
+##### URL params
+###### Required
+`:hash=[string]`
+Example: hash = faee86eee0f4b16065fe5805c7c1e8ded6080cac6e80fe1653c8458012c821ab
+##### Example URL path:
+> http://localhost:8000/stars/hash:faee86eee0f4b16065fe5805c7c1e8ded6080cac6e80fe1653c8458012c821ab, where 'faee86eee0f4b16065fe5805c7c1e8ded6080cac6e80fe1653c8458012c821ab' is the block hash.
 #### Success response
 **Code:** 200 OK
 **Content:**
 ```
 {
-    "hash": "ff55ee3e780a35b045f9f432a604a560642a6dcdcdecfd7a4cb460d02ca82176",
-    "height": 10,
-    "body": "Testing block with test string data",
-    "time": "1543252452271",
-    "previousBlockHash": "22afb1dc5683a2c64466a15e662ab458f7f5c6d3436cbf2a06544376d84dd373"
+    "hash": "faee86eee0f4b16065fe5805c7c1e8ded6080cac6e80fe1653c8458012c821ab",
+    "height": 1,
+    "body": {
+        "address": "124zuqjNvWQT9WJwTyCSr9fR5xVbQipp2N",
+        "star": {
+            "ra": "16h 29m 1.0s",
+            "dec": "68° 52' 56.9",
+            "story": "466f756e642073746172207573696e672068747470733a2f2f7777772e676f6f676c652e636f6d2f736b792f",
+            "storyDecoded": "Found star using https://www.google.com/sky/"
+        }
+    },
+    "time": "1544170915615",
+    "previousBlockHash": "b1fd22dfb227709bce80ace31a896ab91f148d9b358b3a90501a0504dc84ecd8"
 }
 ```
 #### Error response
-If the payload is empty the call will return:
-**Code:** 400 Bad Request
+If the hash provided in the URL is not in the blockchain the call will return:
+**Code:** 404 Not Found
 **Content:**
 ```
 {
-    "status": 400,
-    "message": "Body can't be empty"
+    "status": 404,
+    "message": "Block Not Found"
 }
+```
+
+### Get block by address endpoint
+#### URL
+> http://localhost:8000/stars/address::address
+##### Method
+GET
+##### URL params
+###### Required
+`:address=[string]`
+Example: address = 124zuqjNvWQT9WJwTyCSr9fR5xVbQipp2N
+##### Example URL path:
+> http://localhost:8000/stars/address:124zuqjNvWQT9WJwTyCSr9fR5xVbQipp2N, where '124zuqjNvWQT9WJwTyCSr9fR5xVbQipp2N' is the address who made the transaction.
+#### Success response
+It returns an array of all the transactions made by the given account if any.
+**Code:** 200 OK
+**Content:**
+```
+[
+    {
+        "hash": "faee86eee0f4b16065fe5805c7c1e8ded6080cac6e80fe1653c8458012c821ab",
+        "height": 1,
+        "body": {
+            "address": "124zuqjNvWQT9WJwTyCSr9fR5xVbQipp2N",
+            "star": {
+                "ra": "16h 29m 1.0s",
+                "dec": "68° 52' 56.9",
+                "story": "466f756e642073746172207573696e672068747470733a2f2f7777772e676f6f676c652e636f6d2f736b792f",
+                "storyDecoded": "Found star using https://www.google.com/sky/"
+            }
+        },
+        "time": "1544170915615",
+        "previousBlockHash": "b1fd22dfb227709bce80ace31a896ab91f148d9b358b3a90501a0504dc84ecd8"
+    }
+]
 ```
